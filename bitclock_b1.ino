@@ -1,3 +1,4 @@
+
 #include <Adafruit_BusIO_Register.h>
 #include <Adafruit_I2CDevice.h>
 #include <Adafruit_I2CRegister.h>
@@ -13,8 +14,10 @@
 #include <Adafruit_ST7789.h>
 #include <Adafruit_ST77xx.h>
 
-#include "screen.h"
+#include "screen_device.h"
 #include "speaker.h"
+#include "notification_scene.h"
+#include "finance_scene.h"
 
 #define TFT_CS D0
 #define TFT_RST D2
@@ -26,26 +29,39 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 #define TFT_SCLK D5
 #define TFT_MOSI D7
 
-Speaker *speaker = new Speaker(SPEAKER);
+Speaker *speaker;
+NotificationScene *notificationScene;
+FinanceScene *financeScene;
+
+int currentTime = 0;
+int previousTime = 0;
+int deltaT = 0;
 
 void setup()
 {
     Serial.begin(115200);
-    pinMode(LED_BUILTIN, OUTPUT);
+
     pinMode(SPEAKER, OUTPUT);
     digitalWrite(SPEAKER, 0);
 
-    Screen *screen = new Screen(128, 160, &tft);
+    ScreenDevice *screen = new ScreenDevice(128, 160, &tft);
     screen->init();
+
+    speaker = new Speaker(SPEAKER);
+
+    notificationScene = new NotificationScene(screen);
+
+    financeScene = new FinanceScene(screen);
+
+    previousTime = millis();
 }
 
 void loop()
 {
-    // int beats[] = {1, 2, 1, 1, 1, 1, 2};
-    // speaker->playRingtone(new Ringtone{
-    //     .notes = "bEGFEBA ",
-    //     .beats = beats,
-    //     .tempo = 200,
-    //     .length = 7});
-    // delay(2000);
+    currentTime = millis();
+    deltaT = currentTime - previousTime;
+    financeScene->render(0);
+    // notificationScene->render(deltaT);
+
+    previousTime = currentTime;
 }
